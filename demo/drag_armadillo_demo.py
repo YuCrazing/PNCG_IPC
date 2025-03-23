@@ -57,6 +57,9 @@ class DK_dirichlet(pncg_base_deformer):
         self.dirichlet_grad()
         self.compute_init_p()
         alpha, gTp, pHp = self.compute_newton_alpha()
+        if alpha < 0:
+            print("alpha < 0: ", alpha)
+            quit()
         # alpha = 1.0
         delta_E = - alpha * gTp - 0.5 * alpha ** 2 * pHp
         delta_E_init = delta_E
@@ -70,6 +73,9 @@ class DK_dirichlet(pncg_base_deformer):
             # self.compute_DK_direction()
             self.compute_FR_direction()
             alpha, gTp, pHp = self.compute_newton_alpha()
+            if alpha < 0:
+                print("alpha < 0: ", alpha)
+                quit()
             # alpha = 1.0
             delta_E = - alpha * gTp - 0.5 * alpha ** 2 * pHp
         print('converage at iter', iter, 'rate', delta_E / delta_E_init, 'delta_E', delta_E, 'alpha', alpha, 'gTp',
