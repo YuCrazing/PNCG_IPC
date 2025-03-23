@@ -355,6 +355,17 @@ class pncg_base_deformer(base_deformer):
             print('Warning: alpha < 0.0', alpha)
             # exit(1)
         print('alpha', alpha)
+        
+        # dHat = 0.01
+        # pMax = 0.0
+        # for vert in self.mesh.verts:
+        #     ti.atomic_max(pMax, ti.abs(vert.p[0]))
+        #     ti.atomic_max(pMax, ti.abs(vert.p[1]))
+        #     ti.atomic_max(pMax, ti.abs(vert.p[2]))
+        # if alpha * pMax * 2 > dHat:
+        #     alpha = dHat / (2 * pMax)
+        #     print('modified alpha', alpha)
+
         for vert in self.mesh.verts:
             vert.x += alpha * vert.p
             # print("p", vert.p)
