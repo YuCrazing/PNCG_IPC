@@ -33,6 +33,8 @@ class pncg_base_deformer(base_deformer):
                                'x_init': ti.types.vector(3, float),
                                'grad': ti.types.vector(3, float),
                                'grad_prev': ti.types.vector(3, float),
+                               'grad_t0': ti.types.vector(3,float),
+                               'grad_t1': ti.types.vector(3,float),
                                'p': ti.types.vector(3, float),
                                })
         self.mesh.verts.place({'diagH': ti.types.vector(3, float)})
@@ -56,7 +58,7 @@ class pncg_base_deformer(base_deformer):
         """Compute energy"""
         E = 0.0
         for vert in self.mesh.verts:
-            E += 0.5 * vert.m * (vert.x - vert.x_hat).norm_sqr()
+            E += 0.5 * vert.m * (vert.x - vert.x_hat).norm_sqr() - vert.m * self.gravity * vert.x[1]
         for c in self.mesh.cells:
             Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
             F = Ds @ c.B
@@ -64,11 +66,70 @@ class pncg_base_deformer(base_deformer):
             E += (self.dt ** 2) * c.W * Psi
         return E
 
+
+    @ti.kernel
+    def displace_x(self, dx: ti.f32):
+        # for vert in self.mesh.verts:
+        #     vert.x += dx
+        self.mesh.verts.x[0] += dx
+
+    @ti.kernel
+    def compute_grad_t0(self):
+        for vert in self.mesh.verts:
+            vert.grad_t0 = vert.m * (vert.x - vert.x_hat - self.dt*self.dt*ti.Vector([0, self.gravity, 0], float))
+
+        for c in self.mesh.cells:
+            Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
+            B = c.B
+            F = Ds @ B  # 3x3
+            para = c.W * self.dt ** 2
+            dPsidx = para * self.compute_dPsidx(F, B, self.mu, self.la)
+            for i in range(4):
+                c.verts[i].grad_t0 += ti.Vector([dPsidx[3 * i], dPsidx[3 * i + 1], dPsidx[3 * i + 2]], float)
+
+    @ti.kernel
+    def compute_grad_t1(self):
+        for vert in self.mesh.verts:
+            vert.grad_t1 = vert.m * (vert.x - vert.x_hat - self.dt*self.dt*ti.Vector([0, self.gravity, 0], float))
+
+        for c in self.mesh.cells:
+            Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
+            B = c.B
+            F = Ds @ B  # 3x3
+            para = c.W * self.dt ** 2
+            dPsidx = para * self.compute_dPsidx(F, B, self.mu, self.la)
+            for i in range(4):
+                c.verts[i].grad_t1 += ti.Vector([dPsidx[3 * i], dPsidx[3 * i + 1], dPsidx[3 * i + 2]], float)
+
+    @ti.kernel
+    def finite_diff_diagH(self, dx: ti.f32):
+        for vert in self.mesh.verts:
+            # print("finite diff diagH", (vert.grad_t0 - vert.grad_t1) / dx*0.5)
+            print("finite diff diagH", vert.grad_t0, vert.grad_t1, (vert.grad_t0 - vert.grad_t1) / dx*0.5)
+
+
+    @ti.kernel
+    def compute_grad(self):
+        for vert in self.mesh.verts:
+            vert.grad_prev = vert.grad
+            vert.grad = vert.m * (vert.x - vert.x_hat - self.dt*self.dt*ti.Vector([0, self.gravity, 0], float))
+
+        for c in self.mesh.cells:
+            Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
+            B = c.B
+            F = Ds @ B  # 3x3
+            para = c.W * self.dt ** 2
+            dPsidx = para * self.compute_dPsidx(F, B, self.mu, self.la)
+            for i in range(4):
+                c.verts[i].grad += ti.Vector([dPsidx[3 * i], dPsidx[3 * i + 1], dPsidx[3 * i + 2]], float)
+
     @ti.kernel
     def compute_grad_and_diagH(self):
         for vert in self.mesh.verts:
             vert.grad_prev = vert.grad
-            vert.grad = vert.m * (vert.x - vert.x_hat)
+            vert.grad = vert.m * (vert.x - vert.x_hat - self.dt*self.dt*ti.Vector([0, self.gravity, 0], float))
+            # print("x-x_hat", vert.x - vert.x_hat)
+            # print("m", vert.m, "grad", vert.grad)
             vert.diagH = vert.m * ti.Vector.one(float, 3)
         for c in self.mesh.cells:
             Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
@@ -81,7 +142,11 @@ class pncg_base_deformer(base_deformer):
                 c.verts[i].grad += ti.Vector([dPsidx[3 * i], dPsidx[3 * i + 1], dPsidx[3 * i + 2]], float)
                 tmp = ti.Vector([diagH_d2Psidx2[3 * i], diagH_d2Psidx2[3 * i + 1], diagH_d2Psidx2[3 * i + 2]])
                 tmp = ti.max(tmp, 0.0)
+                # print("c.verts[i].grad", ti.Vector([dPsidx[3 * i], dPsidx[3 * i + 1], dPsidx[3 * i + 2]], float))
                 c.verts[i].diagH += tmp
+
+        # for vert in self.mesh.verts:
+        #     print("diagH", vert.diagH)
 
     @ti.kernel
     def compute_pHp(self) -> float:
@@ -108,7 +173,7 @@ class pncg_base_deformer(base_deformer):
         for vert in self.mesh.verts:
             vert.x_n = vert.x
             vert.x_hat = vert.x + self.dt * vert.v
-            vert.x_hat[1] += self.dt * self.dt * self.gravity
+            # vert.x_hat[1] += self.dt * self.dt * self.gravity
 
     @ti.kernel
     def compute_grad_inf_norm(self) -> float:
@@ -260,9 +325,18 @@ class pncg_base_deformer(base_deformer):
         pHp: p^{\top} H p; gTp: grad^{top} p"""
         pHp = 0.0
         gTp = 0.0
+
+        # for vert in self.mesh.verts:
+        #     print("x", vert.x)
+
+        # ti.loop_config(serialize=True)
         for vert in self.mesh.verts:
             gTp += vert.grad.dot(vert.p)
+            # print("grad", vert.grad)
             pHp += vert.p.norm_sqr() * vert.m
+
+        # for vert in self.mesh.verts:
+        #     print("diagH", vert.diagH)
 
         for c in self.mesh.cells:
             Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1, 4))])
@@ -276,8 +350,15 @@ class pncg_base_deformer(base_deformer):
             tmp = self.compute_p_d2Psidx2_p(F, B, p, self.mu, self.la)
             pHp += c.W * self.dt ** 2 * ti.max(tmp, 0.0)
         alpha = - gTp / pHp
+        # alpha = 1
+        if alpha < 0.0:
+            print('Warning: alpha < 0.0', alpha)
+            # exit(1)
+        print('alpha', alpha)
         for vert in self.mesh.verts:
             vert.x += alpha * vert.p
+            # print("p", vert.p)
+        print("===")
         return (alpha, gTp, pHp)
 
     @ti.kernel

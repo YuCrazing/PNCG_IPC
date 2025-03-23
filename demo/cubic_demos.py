@@ -105,6 +105,7 @@ if __name__ == '__main__':
     ti.init(arch=ti.gpu, default_fp=ti.f32)#, device_memory_fraction=0.9)#,kernel_profiler=True),advanced_optimization=True,fast_math=True)
     demos = ['cube','cube_10','cube_20','cube_40']
     demo = demos[3]
+    print('demo',demo)
     deformer = cubic_demos(demo = demo)
     print(deformer.dict)
     deformer.get_dirichlet_points()

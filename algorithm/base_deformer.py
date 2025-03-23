@@ -11,6 +11,7 @@ class base_deformer:
         self.demo = demo
         print('demo', self.demo)
         self.mu, self.la = model.mu, model.la
+        print('mu', self.mu, 'la', self.la)
         self.dict = model.dict
         self.density = model.density
         self.dt = model.dt
@@ -82,9 +83,13 @@ class base_deformer:
         for c in self.mesh.cells:
             Ds = ti.Matrix.cols([c.verts[i].x - c.verts[0].x for i in ti.static(range(1,4))])
             c.B = Ds.inverse()
-            c.W = ti.abs(Ds.determinant()) / 6.0
+            # c.W = ti.abs(Ds.determinant()) / 6.0
+            c.W = 1.0
+            # print('W', c.W)
             for i in ti.static(range(4)):
                 c.verts[i].m += self.density * c.W / 4.0
+            #     print("id", c.verts[i].id, "m", c.verts[i].m)
+            # print("--")
 
     @ti.kernel
     def init_indices(self):
@@ -247,12 +252,17 @@ class base_deformer:
         canvas.set_background_color(color=(0.2, 0.2, 0.2))
         point_light_color = (1.0, 0.9, 0.8)  # Warm white color
         diffuse_color = (0.6, 0.4, 0.2)
+        paused = True
         while window.running:
             if window.get_event(ti.ui.PRESS):
                 if window.event.key == 'r':
                     self.restart()
                 if window.event.key == 'b':
                     break
+                if window.event.key == 'p':
+                    paused = True
+                if window.event.key == ' ':
+                    paused = False
             camera.track_user_inputs(window, movement_speed=0.1, hold_key=ti.ui.RMB)
             scene.set_camera(camera)
             scene.ambient_light((0.1, 0.1, 0.1))
@@ -262,5 +272,6 @@ class base_deformer:
                                  color=diffuse_color)
             canvas.scene(scene)
             window.show()
-            self.step()
+            if not paused:
+                self.step()
 

@@ -10,9 +10,11 @@ class model_loading:
     def __init__(self, demo):
         if demo == 'armadillo_collision_free':
             demo_dict = {'E': 5e4, 'nu': 0.4, 'density': 1.0, 'gravity': -9.8, 'dt': 0.04,
-                         'epsilon': 5e-5, 'iter_max': 150, 'height': 1.0, 'elastic_type': 'FCR_filter',
-                         'model_paths': ['../model/mesh/Armadillo13K/Armadillo13K.node'],
-                         'rotations': [[0, 0, 0]], 'scales': [[1.0, 1.0, 1.0]], 'translations': [[0.0, 0.0, 0.0]],
+                         'epsilon': 5e-5, 'iter_max': 150, 'height': 1.0, 'elastic_type': 'SNH',
+                         'model_paths': ['../model/mesh/cube/cube.1.node'],
+                         'rotations': [[0, 0, 0]], 'scales': [[1.0, 1.0, 10.0]], 'translations': [[0.0, 2.0, 0.0]],
+                        #  'model_paths': ['../model/mesh/Armadillo13K/Armadillo13K.node'],
+                        #  'rotations': [[0, 0, 0]], 'scales': [[1.0, 1.0, 1.0]], 'translations': [[0.0, 0.0, 0.0]],
                          }
             self.load_demo_n_object_collision_free(demo, demo_dict)
             self.camera_position = [73.29204366, 65.86544759, 94.53984166]
@@ -25,9 +27,9 @@ class model_loading:
             self.camera_position = [2.0, 2.0, 3.95]
             self.camera_lookat = [0.5, 0.5, 0.5]
         elif demo == 'cube':
-            demo_dict = {'E': 1e4, 'nu': 0.4, 'density': 500.0, 'gravity': -9.8, 'dt': 0.04,
-                         'epsilon': 1e-10, 'iter_max': 50, 'height': 4.0, 'elastic_type': 'ARAP_filter',
-                         'model_paths': ['../model/mesh/cube/cube.node'], 'rotations': [[0, 0, 0]],
+            demo_dict = {'E': 1e4, 'nu': 0.4, 'density': 5.0, 'gravity': -9.8, 'dt': 0.016666667,
+                         'epsilon': 1e-10, 'iter_max': 1, 'height': 4.0, 'elastic_type': 'NH',
+                         'model_paths': ['../model/mesh/cube/cube.1.node'], 'rotations': [[0, 0, 0]],
                          'scales': [[1.0, 1.0, 1.0]], 'translations': [[0.0, 0.0, 0.0]],}
             self.load_demo_n_object_collision_free(demo, demo_dict)
             self.camera_position = [0.16850185, -1.69999744,  5.03710925]
@@ -265,6 +267,7 @@ class model_loading:
         E = demo_dict['E']
         nu = demo_dict['nu']
         self.mu, self.la =  E / (2.0 * (1.0 + nu)), E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu))
+        print('mu, la', self.mu, self.la)
         self.density = demo_dict['density']
         self.dt = demo_dict['dt']
         self.gravity = demo_dict['gravity']
@@ -308,11 +311,14 @@ class model_loading:
         models = []
         print('add model0')
         number = len(demo_dict['scales'])
+        print('number of objects: ', number)
+        print(demo_dict['model_paths'][0])
         for i in range(number):
             model_i = self.add_object(model_path=demo_dict['model_paths'][i], scale=demo_dict['scales'][i], translation=demo_dict['translations'][i], rotation=demo_dict['rotations'][i])
             models.append(model_i)
             if i == 0:
                 self.ground = np.min(model_i[0][:,1]) - demo_dict['height']
+        print('load mesh')
         self.mesh = Patcher.load_mesh(models, relations=["CV"])
         print('load finish')
 
