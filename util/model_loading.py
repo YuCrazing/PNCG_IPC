@@ -10,13 +10,16 @@ class model_loading:
     def __init__(self, demo):
         if demo == 'armadillo_collision_free':
             demo_dict = {'E': 5e4, 'nu': 0.4, 'density': 1.0, 'gravity': -9.8, 'dt': 0.04,
-                         'epsilon': 5e-5, 'iter_max': 150, 'height': 1.0, 'elastic_type': 'FCR_filter',
-                         'model_paths': ['../model/mesh/Armadillo13K/Armadillo13K.node'],
-                         'rotations': [[0, 0, 0]], 'scales': [[1.0, 1.0, 1.0]], 'translations': [[0.0, 0.0, 0.0]],
+                         'epsilon': 5e-5, 'iter_max': 50, 'height': 1.0, 'elastic_type': 'SNH',
+                        #  'model_paths': ['../model/mesh/Armadillo13K/Armadillo13K.node'],
+                         'model_paths': ['../model/mesh/bunny/bunny.node'],
+                         'rotations': [[0, 0, 0]], 'scales': [[2.0, 2.0, 2.0]], 'translations': [[0.0, 0.0, 0.0]],
                          }
             self.load_demo_n_object_collision_free(demo, demo_dict)
-            self.camera_position = [73.29204366, 65.86544759, 94.53984166]
-            self.camera_lookat = [72.2562863, 65.09321715, 93.25890768]
+            # self.camera_position = [73.29204366, 65.86544759, 94.53984166]
+            # self.camera_lookat = [72.2562863, 65.09321715, 93.25890768]
+            self.camera_position = [1, 1, 1]
+            self.camera_lookat = [0, 0, 0]
         elif demo == 'banana':
             demo_dict = {'E': 5e4, 'nu': 0.3, 'density': 100.0, 'gravity': -9.8, 'dt': 0.01,
                          'epsilon': 1e-7, 'iter_max': 50, 'height': 3.0, 'elastic_type': 'ARAP_filter',
@@ -86,6 +89,35 @@ class model_loading:
             self.load_demo_n_object(demo, demo_dict)
             self.camera_position = [ 2.02077697, -0.54062709, 2.59427191]
             self.camera_lookat = [ 1.34371885, -0.79285719, 1.90291651]
+
+        elif demo == 'one_E_drop_demo_contact':
+            demo_dict = {'E': 1e4, 'nu': 0.4, 'density': 50.0, 'gravity': -9.8, 'dt': 0.01,
+                         'epsilon': 1e-4, 'iter_max': 50,  'height': 0.5,
+                         'dHat': 0.025, 'kappa': 0.5, 'elastic_type': 'NH', 'adj': 0, 'ground_barrier': 1,
+                         'model_paths': ['../model/mesh/e_2/e_2.node' for _ in range(1)],
+                         'rotations': [[0.0, 0.0, 0.0] for _ in range(1)],
+                         'scales': [[1.0, 1.0, 1.0] for _ in range(1)],
+                         'translations': [[1.5 * j, 1.5*i, 0.0] for i in range(1) for j in range(1)],
+                         }
+            self.load_demo_n_object(demo, demo_dict)
+            self.camera_position = [ 2.02077697, -0.54062709, 2.59427191]
+            self.camera_lookat = [ 1.34371885, -0.79285719, 1.90291651]
+
+        elif demo == 'bunny':
+            demo_dict = {'E': 1e4, 'nu': 0.4, 'density': 50.0, 'gravity': -9.8, 'dt': 0.01,
+                         'epsilon': 1e-4, 'iter_max': 50,  'height': 0.5,
+                         'dHat': 0.025, 'kappa': 0.5, 'elastic_type': 'NH', 'adj': 0, 'ground_barrier': 1,
+                        #  'model_paths': ['../model/mesh/puffer_ball/puffer_ball_4k.1_0.node' for _ in range(2)],
+                         'model_paths': ['../model/mesh/bunny/bunny.node' for _ in range(2)],
+                         'rotations': [[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]],
+                         'scales': [[1.0, 1.0, 1.0],[1.0, 1.0, 1.0]],
+                         'translations': [[0.0, 0.0, 0.0],[0.0, 1.5, 0.0]],
+                         }
+            self.load_demo_n_object(demo, demo_dict)
+            self.camera_position = [ 2.02077697, -0.54062709, 2.59427191]
+            self.camera_lookat = [ 1.34371885, -0.79285719, 1.90291651]
+
+
 
         elif demo == 'twist_mat150':
             demo_dict = {'E': 1e4, 'nu': 0.4, 'density': 1000.0, 'gravity': 0.0, 'dt': 0.04,
