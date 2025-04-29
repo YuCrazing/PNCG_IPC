@@ -37,8 +37,11 @@ class twist_demo(pncg_ipc_deformer):
             if iter == 0:
                 self.compute_init_p()
             else:
-                self.compute_DK_direction()
+                self.compute_FR_direction()
             alpha, gTp, pHp = self.line_search_clamped_newton(1.0)
+            if alpha < 0:
+                print('alpha:', alpha)
+                quit()
             delta_E = - alpha * gTp - 0.5 * alpha ** 2 * pHp
             if iter == 0:
                 delta_E_init = delta_E

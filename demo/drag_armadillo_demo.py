@@ -12,6 +12,7 @@ class DK_dirichlet(pncg_base_deformer):
         dirichlet_np = np.load(path)
         print('load np')
         print(dirichlet_np.shape, self.n_verts)
+        dirichlet_np = np.zeros(self.n_verts)
         self.mesh.verts.is_dirichlet.from_numpy(dirichlet_np)
         print('init finish')
 
@@ -36,7 +37,7 @@ class DK_dirichlet(pncg_base_deformer):
 
     def step(self):
         print('Frame', self.frame)
-        if self.frame < 80:
+        if self.frame < -80:
             self.assign_xn_xhat_2(5000.0)
         else:
             self.assign_xn_xhat()
@@ -47,8 +48,8 @@ class DK_dirichlet(pncg_base_deformer):
         delta_E = - alpha * gTp - 0.5 * alpha ** 2 * pHp
         delta_E_init = delta_E
         for iter in range(self.iter_max):
-            if delta_E < self.epsilon * delta_E_init:
-                break
+            # if delta_E < self.epsilon * delta_E_init:
+            #     break
 
             self.compute_grad_and_diagH()
             self.dirichlet_grad()
@@ -64,6 +65,7 @@ class DK_dirichlet(pncg_base_deformer):
 if __name__ == '__main__':
     ti.init(arch=ti.gpu, default_fp=ti.f32)
     demo = 'armadillo_collision_free'
+    # demo = 'four_long_noodle'
     deformer = DK_dirichlet(demo = demo)
     deformer.get_dirichlet_points()
     deformer.init_dirichlet()

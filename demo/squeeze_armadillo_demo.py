@@ -142,6 +142,9 @@ class squeeze_armadillo_demo(pncg_ipc_deformer):
             else:
                 self.compute_DK_direction()
             alpha, gTp, pHp = self.line_search_clamped_newton(0.5)
+            if alpha < 0:
+                print('alpha', alpha)
+                quit()
             delta_E = - alpha * gTp - 0.5 * alpha ** 2 * pHp
             if iter == 0:
                 delta_E_init = delta_E

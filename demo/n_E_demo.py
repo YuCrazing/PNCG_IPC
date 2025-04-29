@@ -11,8 +11,12 @@ class pncg_index(pncg_ipc_deformer):
         # initialize model
         self.mesh.verts.place({'index': ti.i32})
         self.per_vertex_color =  ti.Vector.field(3, dtype=float,shape=self.n_verts)
-        self.object_size = 1046
+        self.object_size = 8368
         self.N_object = int(self.n_verts / self.object_size)
+        print('N_object', self.N_object)
+        print('object_size', self.object_size)
+        print('n_verts', self.n_verts)
+        # quit()
         self.init_index()
 
         self.frame = 0
@@ -136,6 +140,7 @@ class pncg_index(pncg_ipc_deformer):
     def step(self):
         print('Frame', self.frame)
         self.assign_xn_xhat()
+
         for iter in range(self.iter_max):
             # print('iter', iter)
             self.find_cnts()

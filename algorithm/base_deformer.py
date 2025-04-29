@@ -253,7 +253,7 @@ class base_deformer:
                     self.restart()
                 if window.event.key == 'b':
                     break
-            camera.track_user_inputs(window, movement_speed=0.1, hold_key=ti.ui.RMB)
+            camera.track_user_inputs(window, movement_speed=1, hold_key=ti.ui.RMB)
             scene.set_camera(camera)
             scene.ambient_light((0.1, 0.1, 0.1))
             for light_pos in self.point_lights:
